@@ -16,9 +16,6 @@ dev = ["pytest>=8,<10", "build>=1,<2"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-canalbus = ["py.typed"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --import-mode=importlib"

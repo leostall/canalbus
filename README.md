@@ -6,17 +6,28 @@ não abre servidor, não imprime resultados e não depende de rede ou banco.
 
 Projeto acadêmico de Design Patterns para quatro integrantes. Os oito padrões
 implementados são **Facade, Builder, Observer, Strategy, Chain of Responsibility,
-Decorator, Command e Adapter**. Veja [a explicação dos padrões](docs/padroes.md).
+Decorator, Command e Adapter**. A biblioteca centraliza a distribuição de
+mensagens entre componentes da aplicação, permitindo trocar regras de validação,
+seleção e tratamento sem alterar o núcleo.
 
-## Nome dos integrantes 
+## Integrantes
+
 - Leonardo Stall
-
-- Giovanna Santos Daniel 
-
+- Giovanna Santos Daniel
 - João Lucas do Prado Ribeiro
-
 - Mirella Haisi Szvarça
-  
+
+## Vídeo de apresentação
+
+**Pendente: adicionar aqui o link do vídeo no YouTube.**
+
+<!-- Substituir a frase acima por: [Assistir à apresentação](URL_DO_VIDEO) -->
+
+O vídeo pode ser não listado. Deve apresentar o objetivo da biblioteca, demonstrar
+o uso padrão e uma extensão criada pelo consumidor. Cada integrante deve explicar
+dois padrões diferentes, mostrando o código, o problema resolvido e a justificativa
+da escolha; para os quatro integrantes, são oito padrões distintos ao todo.
+
 ## Instalação
 
 Requer Python **3.11 ou superior**. Na pasta que contém `pyproject.toml`:
@@ -146,6 +157,8 @@ sua classe; registra sucesso e falha com `perf_counter`, sem imprimir nada.
 
 ## Testes, exemplos e empacotamento
 
+Após instalar o pacote e ativar o ambiente virtual:
+
 ```bash
 python -m pytest
 python examples/01_basic_broadcast.py
@@ -154,20 +167,81 @@ python examples/03_queued_delivery.py
 python examples/04_callback_adapter.py
 python examples/05_timing_decorator.py
 python examples/06_external_extensions.py
+python examples/07_delivery_failure.py
+python examples/08_validation_chain.py
 python -m build
 ```
 
+| Exemplo | O que demonstra e verifica |
+| --- | --- |
+| [01 — Broadcast](examples/01_basic_broadcast.py) | Dois receptores notificados, isolamento entre canais e deduplicação de inscrições |
+| [02 — Round Robin](examples/02_round_robin.py) | Alternância de destinatários com cursor independente por canal |
+| [03 — Fila](examples/03_queued_delivery.py) | FIFO, processamento parcial e preservação dos destinatários após remover uma inscrição |
+| [04 — Adapter](examples/04_callback_adapter.py) | Uso de uma função existente como receptor |
+| [05 — Decorator](examples/05_timing_decorator.py) | Medições registradas tanto no sucesso quanto na falha |
+| [06 — Extensões externas](examples/06_external_extensions.py) | Receptor, estratégia e validador definidos pelo consumidor, usando apenas a API pública |
+| [07 — Falha de entrega](examples/07_delivery_failure.py) | Conteúdo aceito com uma entrega malsucedida, sem bloquear o receptor seguinte |
+| [08 — Cadeia de validação](examples/08_validation_chain.py) | Rejeições por conteúdo vazio, tamanho e uma regra externa de liberação; entrega apenas após aprovação de toda a cadeia |
+
+Todos os exemplos contêm asserções sobre os resultados. A suíte em
+[tests/test_examples.py](tests/test_examples.py) descobre os arquivos `examples/*.py`
+e executa cada um em um processo com diretório de trabalho externo ao projeto,
+verificando que o pacote instalado pode ser importado pelo consumidor.
+
 `python -m build` gera wheel e distribuição de fontes em `dist/`. Para importar
-em outro projeto: `python -m pip install /caminho/canalbus-0.1.0-py3-none-any.whl`.
-Veja os comandos realmente executados em [validação](docs/validacao.md).
+em outro projeto, instale o wheel no ambiente desse projeto:
 
-## Documentação para o grupo
+```bash
+python -m pip install /caminho/para/canalbus/dist/canalbus-0.1.0-py3-none-any.whl
+```
 
-- [Arquitetura e decisões](docs/arquitetura.md)
-- [Os oito padrões, com trechos do código](docs/padroes.md)
-- [Roteiro de apresentação para quatro integrantes](docs/roteiro.md)
-- [Requisitos e testes correspondentes](docs/requisitos.md)
-- [Validações executadas](docs/validacao.md)
+## Arquitetura e padrões de projeto
+
+O fluxo de uma publicação é: criar a mensagem, validar o conteúdo, obter as
+inscrições do canal, selecionar destinatários, criar comandos e executá-los ou
+enfileirá-los. Os resultados distinguem rejeição de conteúdo, agendamento e falha
+de entrega. O núcleo fica em `src/canalbus`; `examples` contém código consumidor
+e `tests` contém a validação automatizada.
+
+| Padrão | Onde está implementado | Problema resolvido e justificativa |
+| --- | --- | --- |
+| **Facade** | [`MessageBus`](src/canalbus/bus.py): `subscribe`, `publish`, `process_pending` | Oferece uma entrada simples que coordena registro, validação, seleção e execução, sem exigir que o consumidor monte esses componentes manualmente. |
+| **Builder** | [`MessageBusBuilder`](src/canalbus/builder.py): métodos `with_*`, `add_validator` e `build` | Monta configurações variadas com uma API fluente; fábricas criam componentes independentes a cada construção. |
+| **Observer** | [`SubscriptionRegistry`](src/canalbus/subscriptions.py), [`Receiver`](src/canalbus/receivers.py) e `MessageBus.publish` | Mantém inscrições por canal e notifica receptores pelo contrato `receive`, desacoplando quem publica de quem trata a mensagem. No Broadcast, todos os inscritos são notificados. |
+| **Strategy** | [`DispatchStrategy`, `BroadcastStrategy` e `RoundRobinStrategy`](src/canalbus/strategies.py) | Troca o algoritmo de seleção por composição; novas estratégias implementam `select` sem modificar o barramento. |
+| **Chain of Responsibility** | [`MessageValidator`](src/canalbus/validation.py): `set_next`, `validate` e `check` | Encadeia regras independentes e interrompe na primeira rejeição; o Builder permite acrescentar validadores externos. |
+| **Decorator** | [`TimingReceiverDecorator`](src/canalbus/receivers.py) | Envolve qualquer `Receiver` para medir duração e sucesso sem alterar sua implementação, mantendo o mesmo contrato. |
+| **Command** | [`DeliverMessageCommand`](src/canalbus/commands.py) e [executores](src/canalbus/execution.py) | Encapsula uma tentativa com mensagem e destinatário, permitindo execução imediata ou posterior em FIFO sem mudar o receptor. |
+| **Adapter** | [`CallbackReceiverAdapter`](src/canalbus/receivers.py) | Converte a chamada `receive(message)` em uma chamada à função fornecida, permitindo integrar callbacks à interface de receptores. |
+
+Adapter e Decorator têm funções distintas: o primeiro adapta uma função ao contrato
+`Receiver`; o segundo já recebe um `Receiver` e adiciona medições. Observer mantém
+os interessados na mensagem, enquanto Strategy decide quais deles recebem cada
+publicação. Essas diferenças devem aparecer na defesa dos padrões.
+
+A separação entre modelos, inscrições, validação, seleção e execução mantém as
+responsabilidades pequenas. Os contratos abstratos e a injeção de componentes
+permitem extensões pelo consumidor (Open/Closed Principle). Mensagens imutáveis,
+resultados explícitos e testes de falhas ajudam a tornar o comportamento previsível.
+
+## Conferência dos requisitos da atividade
+
+| Requisito das imagens | Situação no projeto |
+| --- | --- |
+| Biblioteca importável para outros desenvolvedores | Atendido: pacote Python configurado em `pyproject.toml`, sem servidor ou aplicação final no núcleo |
+| Funcionalidade pronta para uso | Atendido: `MessageBus()` oferece Broadcast, execução imediata e validadores padrão; há um receptor concreto pronto |
+| Extensibilidade sem alterar a biblioteca | Atendido: contratos públicos `Receiver`, `DispatchStrategy` e `MessageValidator`, demonstrados nos exemplos 06 e 08 |
+| Design Patterns e Clean Code | Oito padrões identificados acima, com responsabilidades separadas e testes; a justificativa oral ainda deve ser apresentada pelo grupo |
+| Equipe com até quatro alunos e nomes no README | Quatro integrantes listados acima; conferir se os nomes estão completos antes da entrega |
+| Código hospedado em repositório | Repositório público: [leostall/canalbus](https://github.com/leostall/canalbus); enviar as alterações locais antes de entregar |
+| Documentação de uso no README | Instalação, primeiro uso, API, fila, extensões, exemplos e limitações documentados aqui |
+| Link do vídeo no YouTube | **Pendente**, na seção reservada acima |
+| Conteúdo obrigatório do vídeo | **Pendente de gravação/verificação**: visão geral, uso padrão, extensão e defesa dos oito padrões, dois por integrante |
+| Entrega de apenas um link para o repositório | A realizar pelo grupo até **18/11**, conforme o enunciado |
+
+Os temas da terceira imagem são sugestões; o enunciado permite tema livre.
+Uma biblioteca de mensagens por canais se enquadra nesse escopo. A existência
+dos padrões e dos exemplos não substitui a explicação individual exigida no vídeo.
 
 ## Limitações
 
