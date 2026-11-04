@@ -1,9 +1,6 @@
 """Três extensões fora de src/, importando apenas a API pública."""
 
-from canalbus import (
-    DispatchStrategy, Message, MessageBusBuilder, MessageValidator,
-    Receiver, Subscription,
-)
+from canalbus import (DispatchStrategy, Message, MessageBusBuilder, MessageValidator, Receiver, Subscription)
 
 
 class RequiredMetadataValidator(MessageValidator):
