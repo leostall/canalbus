@@ -1,5 +1,11 @@
 # canalbus
 
+# Nome dos integrantes 
+Leonardo Stall
+Giovanna Santos Daniel 
+João Lucas do Prado Ribeiro
+Mirella Haisi Szvarça 
+
 Biblioteca Python de mensagens por canais, síncrona e em memória. Uma aplicação
 importa o pacote, inscreve receptores e publica mensagens. O código do pacote
 não abre servidor, não imprime resultados e não depende de rede ou banco.
