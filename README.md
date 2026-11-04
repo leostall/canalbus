@@ -1,13 +1,4 @@
-# canalbus
-
-# Nome dos integrantes 
-- Leonardo Stall
-
-- Giovanna Santos Daniel 
-
-- João Lucas do Prado Ribeiro
-
-- Mirella Haisi Szvarça 
+# Canalbus
 
 Biblioteca Python de mensagens por canais, síncrona e em memória. Uma aplicação
 importa o pacote, inscreve receptores e publica mensagens. O código do pacote
@@ -17,6 +8,15 @@ Projeto acadêmico de Design Patterns para quatro integrantes. Os oito padrões
 implementados são **Facade, Builder, Observer, Strategy, Chain of Responsibility,
 Decorator, Command e Adapter**. Veja [a explicação dos padrões](docs/padroes.md).
 
+## Nome dos integrantes 
+- Leonardo Stall
+
+- Giovanna Santos Daniel 
+
+- João Lucas do Prado Ribeiro
+
+- Mirella Haisi Szvarça
+  
 ## Instalação
 
 Requer Python **3.11 ou superior**. Na pasta que contém `pyproject.toml`:
