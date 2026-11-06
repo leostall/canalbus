@@ -13,15 +13,11 @@ seleção e tratamento sem alterar o núcleo.
 ## Integrantes
 
 - Leonardo Stall
-- Giovanna Santos Daniel
+- Giovanna Rita Santos Daniel
 - João Lucas do Prado Ribeiro
 - Mirella Haisi Szvarça
 
-## Vídeo de apresentação
-
-**Pendente: adicionar aqui o link do vídeo no YouTube.**
-
-<!-- Substituir a frase acima por: [Assistir à apresentação](URL_DO_VIDEO) -->
+## Assistir à apresentação (https://www.youtube.com/watch?v=AJCEOC5Xe0w)
 
 O vídeo pode ser não listado. Deve apresentar o objetivo da biblioteca, demonstrar
 o uso padrão e uma extensão criada pelo consumidor. Cada integrante deve explicar
